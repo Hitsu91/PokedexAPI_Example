@@ -32,6 +32,50 @@ namespace PokedexAPI_V3.Data
             return ListFromResults(results);
         }
 
+        public void AddPokemon(Pokemon newPkm)
+        {
+            db.Update
+            (
+                $"INSERT INTO pokemon(name, weight, generation_id) VALUES" +
+                $"('{newPkm.Name}', {newPkm.Weight}, {newPkm.Generation.Id})"
+            );
+            // Devo trovare l'id del pokemon appena inserito
+            // select max(id) from pokemon;
+            var pokemonId = GetLastId();
+            UpdatePokemonTypes(pokemonId, newPkm.Types);
+        }
+
+        private void UpdatePokemonTypes(int pokemonId, PokemonType[] types)
+        {
+            foreach (var type in types)
+            {
+                db.Update
+                (
+                    "INSERT INTO pokemon_types(pokemon_id, type_id) VALUES" +
+                    $"({pokemonId}, {type.Id});"
+                );
+            }
+        }
+
+        public void UpdatePokemon(int id, Pokemon pokemon)
+        {
+            db.Update
+            (
+                $"UPDATE pokemon SET name = '{pokemon.Name}', weight = {pokemon.Weight}," +
+                $"generation_id = {pokemon.Generation.Id} WHERE id = {id};"
+            );
+            // Cestinare tutte le associazioni dei tipi a questo pokemon
+            db.Update($"DELETE FROM pokemon_types WHERE pokemon_id = {id};");
+            UpdatePokemonTypes(id, pokemon.Types);
+        }
+
+        private int GetLastId()
+        {
+            var res = db.ReadOne("SELECT MAX(id) as last_id FROM pokemon;");
+            return int.Parse(res["last_id"]);
+        }
+
+
         private List<Pokemon> ListFromResults(List<Dictionary<string, string>> results)
         {
             return results.Select(result =>

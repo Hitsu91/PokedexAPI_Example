@@ -26,5 +26,21 @@ namespace PokedexAPI_V3.Controllers
             return _dao.GetAll();
         }
 
+        [HttpPost]
+        public List<Pokemon> AddPokemon([FromBody] Pokemon newPokemon)
+        {
+            _dao.AddPokemon(newPokemon);
+
+            return _dao.GetAll();
+        }
+
+        [HttpPut("{id}")]
+        public List<Pokemon> UpdatePokemon([FromRoute] int id, [FromBody] Pokemon updatedPkm)
+        {
+            _dao.UpdatePokemon(id, updatedPkm);
+
+            return _dao.GetAll();
+        }
+
     }
 }
