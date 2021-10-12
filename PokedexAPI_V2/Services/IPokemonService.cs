@@ -13,5 +13,7 @@ namespace PokedexAPI_V2.Services
         void AddPokemon(Pokemon newPkm);
         void DeletePokemon(int id);
         void UpdatePokemon(int id, Pokemon updatedPkm);
+        List<Pokemon> GetAllByType(string type);
+        List<Pokemon> GetAllByWeight(double minWeight, double maxWeight);
     }
 }

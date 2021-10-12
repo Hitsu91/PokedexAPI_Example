@@ -10,6 +10,7 @@ namespace PokedexAPI_V2.Services
 {
     public class PokemonService : IPokemonService
     {
+        private const string Query = "SELECT * FROM pokemon";
         private readonly Database db;
 
         // Al service per mezzo della DI, mi faccio fornire un oggetto di tipo 
@@ -38,39 +39,76 @@ namespace PokedexAPI_V2.Services
 
         public void AddPokemon(Pokemon newPkm)
         {
-            throw new NotImplementedException();
+            db.Update
+            (
+                $"INSERT INTO pokemon (name, types, weight) " +
+                $"VALUES('{newPkm.Name}', '{string.Join(',', newPkm.Types)}', {newPkm.Weight});"
+            );
         }
 
         public void DeletePokemon(int id)
         {
-            throw new NotImplementedException();
+            db.Update($"DELETE FROM pokemon WHERE id = {id};");
         }
 
         public List<Pokemon> GetAll()
         {
-            var results = db.Read("SELECT * FROM pokemon");
-            return results.Select(result =>
-            {
-                var p = new Pokemon
-                {
-                    Id = int.Parse(result["id"]),
-                    Name = result["name"],
-                    Types = result["types"].Split(","),
-                    Weight = double.Parse(result["weight"])
-                };
+            var results = db.Read(Query);
+            return results.Select(result => FromDictionary(result))
+                          .ToList();
+        }
 
-                return p;
-            }).ToList();
+        public List<Pokemon> GetAllByType(string type)
+        {
+            var results = db.Read($"SELECT * FROM pokemon WHERE types LIKE '%{type}%'");
+            return results.Select(result => FromDictionary(result))
+                          .ToList();
+        }
+
+        public List<Pokemon> GetAllByWeight(double minWeight, double maxWeight)
+        {
+            var results = db.Read
+            (
+                $"SELECT * FROM pokemon WHERE weight BETWEEN {minWeight} AND {maxWeight};"
+            );
+            return results.Select(result => FromDictionary(result))
+                          .ToList();
         }
 
         public Pokemon GetById(int id)
         {
-            throw new NotImplementedException();
+            var result = db.ReadOne($"SELECT * FROM pokemon WHERE id = {id}");
+            return FromDictionary(result);
         }
 
         public void UpdatePokemon(int id, Pokemon updatedPkm)
         {
-            throw new NotImplementedException();
+            db.Update
+            (
+                $"UPDATE pokemon SET name = '{updatedPkm.Name}', " +
+                $"types = '{string.Join(',', updatedPkm.Types)}', " +
+                $"weight = {updatedPkm.Weight} " +
+                $"WHERE id = {id};"
+            );
         }
+
+        // Applico il DRY, don't repeat yourself!
+        // Quando possibile, rifattorizzare parti di metodi in altri metodi
+        // e riutilizzarli, invece di fare copia/incolla
+        private Pokemon FromDictionary(Dictionary<string, string> dictionary)
+        {
+            if (dictionary is null)
+            {
+                return null;
+            }
+            return new Pokemon
+            {
+                Id = int.Parse(dictionary["id"]),
+                Name = dictionary["name"],
+                Types = dictionary["types"].Split(","),
+                Weight = double.Parse(dictionary["weight"])
+            };
+        }
+
     }
 }
